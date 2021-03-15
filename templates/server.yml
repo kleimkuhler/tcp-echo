@@ -5,6 +5,7 @@
 {{- $inject := .Values.server.linkerdInject }}
 {{- $opaque := .Values.server.opaque }}
 {{- $reverse := .Values.reverse }}
+{{- $hostIP := .Values.hostIP }}
 {{- range $i, $e := until (int .Values.server.services) }}
 ---
 apiVersion: v1
@@ -20,9 +21,8 @@ spec:
     role: server
     instance: {{quote $i}}
   ports:
-    - port: 4444
-      targetPort: 4444
-
+    - port: 4445
+      targetPort: 4445
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -55,7 +55,7 @@ spec:
         config.linkerd.io/proxy-version: {{ $linkerd.proxyVersion }}
         {{- end }}
         {{- if or $reverse $opaque }}
-        config.linkerd.io/opaque-ports: "4444"
+        config.linkerd.io/opaque-ports: "4445"
         {{- end }}
     spec:
       containers:
@@ -66,10 +66,12 @@ spec:
               value: debug
           args:
             - server
-            - "4444"
+            - "4445"
             - --reverse={{ $reverse }}
           ports:
-            - containerPort: 4444
+            - containerPort: 4445
+              hostPort: 4445
+              hostIP: {{ $hostIP }}
               protocol: TCP
               name: echo
 {{- end }}
